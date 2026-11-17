@@ -1,61 +1,89 @@
-# AltaGym2
+# Orquestator-gym
 
-## Matriz de versiones validada
+Orquestator-gym es un laboratorio de desarrollo agéntico para AltaGym: un
+workspace Nx que reúne un frontend Angular 22, una API Next.js y el flujo de
+especificación de OpenSpec.
 
-| Herramienta | Versión exacta |
+## Estado actual
+
+El producto previsto es una aplicación de reservas para un gimnasio: debe
+permitir consultar clases y reservar o cancelar plazas y sesiones privadas.
+Hoy el repositorio solo contiene la base técnica inicial, no la funcionalidad
+de reservas. La pantalla Angular muestra la base de la aplicación y la API
+expone únicamente `GET /api/health`, que devuelve `{"status":"ok"}`.
+La orquestación de agentes también es trabajo futuro; todavía no está
+implementada.
+
+## Requisitos y versiones
+
+Usa Node.js `24.22.2` y pnpm `12.21.0`, la versión fijada por
+`package.json` y `pnpm-lock.yaml`. Las versiones principales son:
+
+| Herramienta | Versión |
 | --- | --- |
-| Node.js | 24.22.2 |
-| pnpm | 12.21.0 |
-| Nx | 24.0.6 |
-| `@nx/angular` | 24.0.6 |
-| `@nx/next` | 24.0.6 |
+| Nx, `@nx/angular`, `@nx/next` | 24.0.6 |
 | Angular | 22.2.6 |
 | Angular Material y CDK | 22.2.7 |
-| TypeScript | 6.0.3 |
 | Next.js | 16.4.6 |
+| TypeScript | 6.0.3 |
 | OpenSpec | 2.0.0 |
 
-### Compatibilidad comprobada y fuentes
+## Arrancar y verificar
 
-- La matriz oficial de [Angular](https://angular.dev/reference/versions) indica que Angular 22 admite Node.js `^22.22.3 || ^24.15.0 || ^26.0.0` y TypeScript `>=6.0.0 <6.1.0`. Node.js 24.22.2 y TypeScript 6.0.3 cumplen esos rangos.
-- La [matriz de compatibilidad Angular/Nx](https://nx.dev/docs/kb/angular-nx-version-matrix) recomienda la versión actual de Nx para Angular 22.2 y establece Nx `>=24.0.0`. Se seleccionó Nx 24.0.6; `@nx/angular` y `@nx/next` son también 24.0.6.
-- Los metadatos de [@nx/angular 24.0.6](https://registry.npmjs.org/@nx%2Fangular/24.0.6) aceptan `@angular/build`, `@angular-devkit/*` y `@schematics/angular` desde la versión 20 hasta antes de la 23. Los metadatos de [@nx/next 24.0.6](https://registry.npmjs.org/@nx%2Fnext/24.0.6) exigen `@nx/webpack` 24.0.6 y Next.js `>=14.0.0 <17.0.0`.
-- Los metadatos de [Angular 22.2.6](https://registry.npmjs.org/@angular%2Fcore/22.2.6) y [Angular Material 22.2.7](https://registry.npmjs.org/@angular%2Fmaterial/22.2.7) confirman que Material requiere CDK 22.2.7 y admite Angular 22.2.6. Los metadatos de [Next.js 16.4.6](https://registry.npmjs.org/next/16.4.6) requieren Node.js `>=20.9.0`.
-- Se comprobó que Node.js 24.22.2 está instalado y que [pnpm 12.21.0](https://registry.npmjs.org/pnpm/12.21.0) puede ejecutarse con Node.js 24. La [tabla de compatibilidad de pnpm](https://pnpm.io/installation#compatibility) incluye Node.js 24 para pnpm 12.
-
-## Desarrollo
-
-Con Node.js 24.22.2 y pnpm 12.21.0:
+Desde la raíz del repositorio:
 
 ```sh
 pnpm install --frozen-lockfile
-pnpm dev:web
 ```
 
-La aplicación web estará disponible en `http://localhost:4200`.
-Para compilarla en modo de producción:
+Arranca el frontend Angular en `http://localhost:4200`:
 
 ```sh
+pnpm nx serve web
+```
+
+Arranca la API Next.js en la URL que indique Nx, normalmente
+`http://localhost:3000`, y comprueba su endpoint de salud:
+
+```sh
+pnpm nx serve api
+curl http://localhost:3000/api/health
+```
+
+El resultado esperado es `{"status":"ok"}` con HTTP 200.
+
+Comprobaciones no interactivas:
+
+```sh
+pnpm nx test web
 pnpm nx build web --configuration=production
-```
-
-Para iniciar la API y comprobar su estado:
-
-```sh
-pnpm dev:api
-```
-
-La ruta `GET http://localhost:3000/api/health` devuelve
-`{"status":"ok"}`. Para compilar la API en modo de producción:
-
-```sh
 pnpm nx build api --configuration=production
 ```
 
-### Estilos
+La compilación Angular genera sus artefactos en `dist/apps/web`. Para
+validar OpenSpec y ver qué cambios están activos:
 
-Angular Material define el tema global, la tipografía y la densidad de sus
-componentes. Tailwind CSS v4 proporciona utilidades para la maquetación y el
-espaciado; su Preflight no se carga para evitar alterar los componentes
-Material. Tailwind detecta las clases utilizadas bajo `apps/web/src`.
+```sh
+pnpm exec openspec list
+pnpm exec openspec validate --specs
+```
 
+Cuando exista un cambio activo, valida sus artefactos con
+`pnpm exec openspec validate <nombre-del-cambio> --strict`.
+
+## Mapa del repositorio
+
+- **Angular:** `apps/web/` contiene la aplicación web; el código está en
+  `apps/web/src/`, la configuración Nx en `apps/web/project.json` y el
+  objetivo de producción es `web:build:production`.
+- **Next.js:** `apps/api/` contiene la API; sus rutas están en
+  `apps/api/src/app/`, incluido `apps/api/src/app/api/health/route.ts`, y la
+  configuración Nx está en `apps/api/project.json`.
+- **OpenSpec:** `openspec/config.yaml` define el flujo; los requisitos están
+  en `openspec/specs/` y la base inicial archivada, con su propuesta y tareas,
+  está en `openspec/changes/archive/2026-11-17-inicializar-base-aplicacion/`.
+- **Producto:** `docs/PRODUCT.md` describe el alcance de la aplicación de
+  reservas; `docs/TECHNICAL_CONTEXT.md` recoge las decisiones técnicas.
+
+Para las reglas de colaboración de agentes, consulta
+[`AGENTS.md`](AGENTS.md).
