@@ -6,6 +6,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "dev:web": "nx serve web",
+    "dev:api": "nx serve api",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

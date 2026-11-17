@@ -29,7 +29,7 @@ Con Node.js 24.22.2 y pnpm 12.21.0:
 
 ```sh
 pnpm install --frozen-lockfile
-pnpm nx serve web
+pnpm dev:web
 ```
 
 La aplicación web estará disponible en `http://localhost:4200`.
@@ -42,7 +42,7 @@ pnpm nx build web --configuration=production
 Para iniciar la API y comprobar su estado:
 
 ```sh
-pnpm nx serve api
+pnpm dev:api
 ```
 
 La ruta `GET http://localhost:3000/api/health` devuelve
