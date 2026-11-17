@@ -31,6 +31,13 @@ La integración concreta de estos servicios se definirá durante el diseño téc
 
 El repo estará bajo un repositorio nx. Esto permitirá gestionar de manera eficiente múltiples aplicaciones y librerías compartidas dentro del mismo monorepo, facilitando la organización del código y la reutilización de componentes.
 
+## Stack frontend
+
+- Nx para organizar el workspace.
+- Angular 22 para la aplicación web.
+- Angular Material para los componentes de interfaz y su tematización.
+- Tailwind CSS para la maquetación, el espaciado y los ajustes visuales.
+
 ## Escala de referencia
 
 - Máximo aproximado de 100 clientes.
