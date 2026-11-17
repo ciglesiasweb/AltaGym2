@@ -24,7 +24,7 @@ El workspace SHALL proporcionar un comando documentado para servir localmente la
 El workspace SHALL proporcionar un objetivo Nx de compilación de producción para la aplicación Angular `web`.
 
 #### Scenario: Compilación limpia
-- **WHEN** una persona ejecuta `pnpm nx build web` después de instalar las dependencias
+- **WHEN** una persona ejecuta `pnpm nx build web --configuration=production` después de instalar las dependencias
 - **THEN** Nx finaliza correctamente y genera los artefactos de producción en el directorio de salida configurado
 
 ### Requirement: Uso conjunto de Angular Material y Tailwind CSS

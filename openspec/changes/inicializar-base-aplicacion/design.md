@@ -21,6 +21,8 @@ El repositorio solo contiene documentación, un `package.json` mínimo y un lock
 
 Inicializar Nx en la raíz existente, conservando el repositorio y el manifiesto de pnpm, y generar una aplicación Angular 22 de renderizado en cliente bajo `apps/web`. Mantener la configuración del proyecto y los targets Nx junto a la aplicación; reservar `libs/` para librerías que se justifiquen en cambios posteriores. Usar versiones compatibles de Nx y Angular y mantener alineadas entre sí las dependencias del plugin Nx.
 
+Antes de ejecutar cualquier generador o inicializar el workspace, resolver las versiones exactas de Nx, Angular 22, Angular Material, TypeScript y Node.js. Contrastar la versión concreta de Nx y su plugin Angular con Angular 22; verificar que la versión de Angular Material acepta esa versión de Angular, que TypeScript está dentro del rango admitido por Angular 22 y que Node.js satisface los rangos de Angular y Nx. Usar las matrices oficiales de compatibilidad y los `peerDependencies`/requisitos `engines` de los paquetes seleccionados, y registrar en el README la matriz exacta comprobada. No continuar al scaffold si algún rango no coincide.
+
 Estructura inicial esperada:
 
 ```text
@@ -39,7 +41,7 @@ pnpm-lock.yaml
 tsconfig.base.json
 ```
 
-Documentar las versiones requeridas de Node.js y pnpm, los comandos de instalación, `pnpm nx serve web` y `pnpm nx build web` en el README raíz. Fijar la versión de pnpm probada en `packageManager` y conservar sus dependencias en el lockfile. Usar una versión de Node compatible con Angular 22 y documentarla de forma reproducible.
+Documentar la matriz validada de versiones exactas de Node.js, pnpm, Nx, Angular 22, Angular Material y TypeScript, así como los comandos de instalación, `pnpm nx serve web` y `pnpm nx build web --configuration=production`, en el README raíz. Fijar las versiones probadas en el manifiesto y conservar las dependencias en el lockfile.
 
 Se elige renderizado en cliente para esta base interna y sin contenido público indexable; añadir SSR supondría configurar y validar un servidor que no necesita ningún requisito actual.
 
@@ -55,7 +57,7 @@ La pantalla inicial incluirá un botón Material con el tema aplicado y un conte
 
 Usar el plugin Angular de Nx para scaffold y targets, Angular Material de la misma generación mayor que Angular, y Tailwind CSS v4 con su integración PostCSS. Versionar manifiesto y lockfile juntos. Fijar en el repositorio una versión de Node compatible con Angular 22 y una versión exacta de pnpm compatible con el workspace; no depender de instalaciones globales de Nx ni Angular CLI.
 
-Validar la instalación con `pnpm install --frozen-lockfile`, el servidor con `pnpm nx serve web`, y la compilación con `pnpm nx build web`. En el servidor, comprobar la URL y la presentación de la pantalla inicial; en la salida de producción, comprobar que el tema Material y las utilidades Tailwind de esa pantalla están presentes.
+Validar la instalación con `pnpm install --frozen-lockfile`, el servidor con `pnpm nx serve web`, y la compilación de producción con `pnpm nx build web --configuration=production`. En el servidor, comprobar la URL y la presentación de la pantalla inicial; en la salida de producción, comprobar que el tema Material y las utilidades Tailwind de esa pantalla están presentes.
 
 ## Risks / Trade-offs
 
