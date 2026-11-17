@@ -1,8 +1,8 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { BookingApi, type Discipline, type GroupSession } from './booking-api';
-import { bookingErrorMessage } from './booking-message';
+import { BookingApi, type Discipline, type GroupSession } from '../booking-api';
+import { bookingErrorMessage } from '../booking-message';
 
 @Component({
   selector: 'app-group-session-list-page',
@@ -13,13 +13,13 @@ import { bookingErrorMessage } from './booking-message';
 export class GroupSessionListPage {
   private readonly api = inject(BookingApi);
   private readonly route = inject(ActivatedRoute);
-  readonly disciplines = signal<Discipline[]>([]);
-  readonly selectedDisciplineId = signal('');
-  readonly sessions = signal<GroupSession[]>([]);
-  readonly loading = signal(false);
-  readonly loadingDisciplines = signal(true);
-  readonly error = signal('');
-  readonly groupedSessions = computed(() => {
+  protected readonly disciplines = signal<Discipline[]>([]);
+  protected readonly selectedDisciplineId = signal('');
+  private readonly sessions = signal<GroupSession[]>([]);
+  protected readonly loading = signal(false);
+  protected readonly loadingDisciplines = signal(true);
+  protected readonly error = signal('');
+  protected readonly groupedSessions = computed(() => {
     const groups = new Map<string, GroupSession[]>();
     for (const session of this.sessions()) {
       groups.set(session.date, [...(groups.get(session.date) ?? []), session]);
@@ -31,7 +31,7 @@ export class GroupSessionListPage {
     void this.loadDisciplines();
   }
 
-  async loadDisciplines(): Promise<void> {
+  private async loadDisciplines(): Promise<void> {
     this.loadingDisciplines.set(true);
     this.error.set('');
     try {
@@ -54,7 +54,7 @@ export class GroupSessionListPage {
     }
   }
 
-  async selectDiscipline(disciplineId: string): Promise<void> {
+  protected async selectDiscipline(disciplineId: string): Promise<void> {
     this.selectedDisciplineId.set(disciplineId);
     this.sessions.set([]);
     if (disciplineId) {
@@ -62,7 +62,7 @@ export class GroupSessionListPage {
     }
   }
 
-  async loadSessions(disciplineId = this.selectedDisciplineId()): Promise<void> {
+  protected async loadSessions(disciplineId = this.selectedDisciplineId()): Promise<void> {
     if (!disciplineId) {
       return;
     }
@@ -78,7 +78,7 @@ export class GroupSessionListPage {
     }
   }
 
-  availabilityLabel(session: GroupSession): string {
+  protected availabilityLabel(session: GroupSession): string {
     switch (session.availability) {
       case 'AVAILABLE':
         return `${session.availableSpots} plazas disponibles de ${session.capacity}`;

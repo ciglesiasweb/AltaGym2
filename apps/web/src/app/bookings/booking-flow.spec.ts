@@ -14,10 +14,10 @@ import {
   type BookingConfirmation,
   type GroupSession,
 } from './booking-api';
-import { BookingConfirmationPage } from './booking-confirmation-page';
-import { BookingResultPage } from './booking-result-page';
-import { GroupSessionDetailPage } from './group-session-detail-page';
-import { MyBookingsPage } from './my-bookings-page';
+import { BookingConfirmationPage } from './booking-confirmation/booking-confirmation-page';
+import { BookingResultPage } from './booking-result/booking-result-page';
+import { GroupSessionDetailPage } from './group-session-detail/group-session-detail-page';
+import { MyBookingsPage } from './my-bookings/my-bookings-page';
 
 const session: GroupSession = {
   id: 'group-session-a',
@@ -254,10 +254,11 @@ describe('group booking web flow', () => {
     const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
     await fixture.whenStable();
 
-    await fixture.componentInstance.confirm();
+    fixture.nativeElement.querySelector('button.primary-button').click();
+    await fixture.whenStable();
 
     expect(api.confirmGroupBooking).toHaveBeenCalledTimes(1);
     expect(navigate).not.toHaveBeenCalled();
-    expect(fixture.componentInstance.error()).toContain('No se pudieron cargar los datos');
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('No se pudieron cargar los datos');
   });
 });

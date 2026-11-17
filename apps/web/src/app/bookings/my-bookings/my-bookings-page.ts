@@ -1,7 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { BookingApi, type OwnBooking } from './booking-api';
-import { bookingErrorMessage } from './booking-message';
+import { BookingApi, type OwnBooking } from '../booking-api';
+import { bookingErrorMessage } from '../booking-message';
 
 @Component({
   selector: 'app-my-bookings-page',
@@ -11,15 +11,15 @@ import { bookingErrorMessage } from './booking-message';
 })
 export class MyBookingsPage {
   private readonly api = inject(BookingApi);
-  readonly bookings = signal<OwnBooking[]>([]);
-  readonly loading = signal(true);
-  readonly error = signal('');
+  protected readonly bookings = signal<OwnBooking[]>([]);
+  protected readonly loading = signal(true);
+  protected readonly error = signal('');
 
   constructor() {
     void this.load();
   }
 
-  async load(): Promise<void> {
+  protected async load(): Promise<void> {
     this.loading.set(true);
     this.error.set('');
     try {

@@ -44,13 +44,7 @@
         Ver el resultado
       </a>
     } @else {
-      <p role="status">{{ currentSession.availability === 'FULL'
-        ? 'La clase está completa y no admite nuevas reservas.'
-        : currentSession.availability === 'WINDOW_CLOSED'
-          ? 'La ventana de reserva está cerrada.'
-          : currentSession.hasConflict
-            ? 'Ya tienes otra actividad en ese horario.'
-            : 'La clase ya no está disponible para reservar.' }}</p>
+      <p role="status">{{ availabilityMessage(currentSession) }}</p>
       <a class="secondary-link" routerLink="/reservar">Elegir otra clase</a>
     }
   }

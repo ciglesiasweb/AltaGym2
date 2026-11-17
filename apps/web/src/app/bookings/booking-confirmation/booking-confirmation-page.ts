@@ -2,8 +2,8 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { BookingApi, type GroupSession } from './booking-api';
-import { bookingErrorMessage } from './booking-message';
+import { BookingApi, type GroupSession } from '../booking-api';
+import { bookingErrorMessage } from '../booking-message';
 
 @Component({
   selector: 'app-booking-confirmation-page',
@@ -16,12 +16,12 @@ export class BookingConfirmationPage {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
-  readonly groupSessionId = signal('');
-  readonly disciplineId = signal('');
-  readonly session = signal<GroupSession | null>(null);
-  readonly loading = signal(true);
-  readonly confirming = signal(false);
-  readonly error = signal('');
+  protected readonly groupSessionId = signal('');
+  protected readonly disciplineId = signal('');
+  protected readonly session = signal<GroupSession | null>(null);
+  protected readonly loading = signal(true);
+  protected readonly confirming = signal(false);
+  protected readonly error = signal('');
 
   constructor() {
     this.route.queryParamMap
@@ -38,7 +38,7 @@ export class BookingConfirmationPage {
       });
   }
 
-  async load(id = this.groupSessionId()): Promise<void> {
+  protected async load(id = this.groupSessionId()): Promise<void> {
     this.loading.set(true);
     this.error.set('');
     try {
@@ -51,7 +51,20 @@ export class BookingConfirmationPage {
     }
   }
 
-  async confirm(): Promise<void> {
+  protected availabilityMessage(session: GroupSession): string {
+    if (session.availability === 'FULL') {
+      return 'La clase está completa y no admite nuevas reservas.';
+    }
+    if (session.availability === 'WINDOW_CLOSED') {
+      return 'La ventana de reserva está cerrada.';
+    }
+    if (session.hasConflict) {
+      return 'Ya tienes otra actividad en ese horario.';
+    }
+    return 'La clase ya no está disponible para reservar.';
+  }
+
+  protected async confirm(): Promise<void> {
     const id = this.groupSessionId();
     const session = this.session();
     if (!id || !session?.reservable || this.confirming()) {
