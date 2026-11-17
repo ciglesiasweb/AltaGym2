@@ -2,7 +2,7 @@ import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
-import { BookingApi, type BookingConfirmation } from './booking-api';
+import { BookingApi, type BookingConfirmation } from '../booking-api';
 
 type ResultState = 'checking' | 'confirmed' | 'not-found' | 'unknown';
 
@@ -16,9 +16,9 @@ export class BookingResultPage {
   private readonly api = inject(BookingApi);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
-  readonly groupSessionId = signal('');
-  readonly result = signal<ResultState>('checking');
-  readonly booking = signal<BookingConfirmation | null>(null);
+  protected readonly groupSessionId = signal('');
+  protected readonly result = signal<ResultState>('checking');
+  protected readonly booking = signal<BookingConfirmation | null>(null);
 
   constructor() {
     this.route.paramMap
@@ -32,7 +32,7 @@ export class BookingResultPage {
       });
   }
 
-  async reconcile(id = this.groupSessionId()): Promise<void> {
+  protected async reconcile(id = this.groupSessionId()): Promise<void> {
     if (!id) {
       this.result.set('unknown');
       return;

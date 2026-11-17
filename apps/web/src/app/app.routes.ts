@@ -1,9 +1,9 @@
 import { Route } from '@angular/router';
-import { BookingConfirmationPage } from './bookings/booking-confirmation-page';
-import { BookingResultPage } from './bookings/booking-result-page';
-import { GroupSessionDetailPage } from './bookings/group-session-detail-page';
-import { GroupSessionListPage } from './bookings/group-session-list-page';
-import { MyBookingsPage } from './bookings/my-bookings-page';
+import { BookingConfirmationPage } from './bookings/booking-confirmation/booking-confirmation-page';
+import { BookingResultPage } from './bookings/booking-result/booking-result-page';
+import { GroupSessionDetailPage } from './bookings/group-session-detail/group-session-detail-page';
+import { GroupSessionListPage } from './bookings/group-session-list/group-session-list-page';
+import { MyBookingsPage } from './bookings/my-bookings/my-bookings-page';
 
 export const appRoutes: Route[] = [
   { path: '', pathMatch: 'full', redirectTo: 'reservas' },

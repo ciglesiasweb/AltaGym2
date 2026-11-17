@@ -1,8 +1,8 @@
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { BookingApi, type GroupSession } from './booking-api';
-import { bookingErrorMessage } from './booking-message';
+import { BookingApi, type GroupSession } from '../booking-api';
+import { bookingErrorMessage } from '../booking-message';
 
 @Component({
   selector: 'app-group-session-detail-page',
@@ -14,10 +14,10 @@ export class GroupSessionDetailPage {
   private readonly api = inject(BookingApi);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
-  readonly session = signal<GroupSession | null>(null);
-  readonly loading = signal(true);
-  readonly error = signal('');
-  readonly disciplineId = signal('');
+  protected readonly session = signal<GroupSession | null>(null);
+  protected readonly loading = signal(true);
+  protected readonly error = signal('');
+  protected readonly disciplineId = signal('');
 
   constructor() {
     this.route.queryParamMap
@@ -33,7 +33,7 @@ export class GroupSessionDetailPage {
       });
   }
 
-  async load(id = this.route.snapshot.paramMap.get('groupSessionId') ?? ''): Promise<void> {
+  private async load(id = this.route.snapshot.paramMap.get('groupSessionId') ?? ''): Promise<void> {
     if (!id) {
       this.session.set(null);
       this.loading.set(false);
@@ -53,7 +53,7 @@ export class GroupSessionDetailPage {
     }
   }
 
-  availabilityMessage(session: GroupSession): string {
+  protected availabilityMessage(session: GroupSession): string {
     switch (session.availability) {
       case 'AVAILABLE':
         return `Hay ${session.availableSpots} plazas disponibles de ${session.capacity}.`;
