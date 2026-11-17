@@ -35,6 +35,6 @@ Este cambio desbloquea la reserva de plazas definiendo el acceso del cliente y l
 - Frontend Angular: flujo de inicio de sesión, retorno seguro a una ruta protegida y tratamiento neutro de sesión terminada, sin añadir autorregistro ni recuperación automática.
 - Pruebas: escenarios de sesión válida, sesión ausente, identidad sin vinculación, cliente inactivo y aislamiento entre clientes; la integración real con Auth0 queda separada de las pruebas ordinarias con identidades `MOCK` controladas.
 
-## Pending Decisions
+## Decisions
 
-- **Validación de sesión:** Next.js usará el SDK oficial `@auth0/nextjs-auth0` para validar la cookie BFF firmada/cifrada y obtener la sesión server-side; la configuración deberá fijar secreto, dominio, cliente, callback, issuer, audience, expiración y revocación, sin aceptar bearer tokens como alternativa implícita.
+- **Validación de sesión:** Auth0 recibe y valida las credenciales de usuario; Next.js no las custodia. En las peticiones protegidas, el navegador envía a la API Next.js únicamente la cookie de sesión BFF `HttpOnly` emitida por Next.js, sin exponerla a Angular ni aceptar bearer tokens como transporte alternativo. El resolvedor server-side usa `@auth0/nextjs-auth0` y `auth0.getSession(request)` para validar la cookie y sus claims con la configuración del SDK (secreto, dominio, cliente, callback, issuer, audience, expiración y revocación); obtiene el `sub` exclusivamente de esa sesión validada, nunca de datos controlados por el cliente.

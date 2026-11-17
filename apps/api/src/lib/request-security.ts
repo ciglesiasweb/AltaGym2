@@ -9,7 +9,18 @@ export function configuredWebOrigin(): string {
     throw new Error('WEB_ORIGIN must be configured');
   }
 
-  return new URL(origin).origin;
+  const parsedOrigin = new URL(origin);
+
+  if (
+    !['http:', 'https:'].includes(parsedOrigin.protocol) ||
+    parsedOrigin.username ||
+    parsedOrigin.password ||
+    parsedOrigin.hostname.includes('*')
+  ) {
+    throw new Error('WEB_ORIGIN must be a concrete HTTP(S) origin');
+  }
+
+  return parsedOrigin.origin;
 }
 
 export function applyCors(response: NextResponse, origin: string | null) {
@@ -31,12 +42,19 @@ export function enforceRequestOrigin(request: Request): NextResponse | undefined
   const allowedOrigin = configuredWebOrigin();
 
   if (origin && origin !== allowedOrigin) {
-    return NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 });
+    return unauthorizedResponse();
   }
 
   if (mutationMethods.has(request.method) && origin !== allowedOrigin) {
-    return NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 });
+    return unauthorizedResponse();
   }
 
   return undefined;
+}
+
+function unauthorizedResponse(): NextResponse {
+  return NextResponse.json(
+    { error: 'UNAUTHORIZED' },
+    { status: 401, headers: { 'Cache-Control': 'no-store' } },
+  );
 }

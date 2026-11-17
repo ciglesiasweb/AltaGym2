@@ -48,7 +48,7 @@ export class ClientContextError extends Error {
 
 export function clientContextErrorResponse(error: ClientContextError): NextResponse {
   return NextResponse.json(
-    { error: error.code },
+    { error: 'UNAUTHORIZED' },
     { status: error.status, headers: { 'Cache-Control': 'no-store' } },
   );
 }
@@ -60,27 +60,38 @@ export async function resolveClientContext(
   repository: ClientIdentityRepository,
   readSession: SessionReader = (currentRequest) => auth0.getSession(currentRequest),
 ): Promise<ClientAuthContext> {
-  const session = await readSession(request);
+  const session: SessionData | null = await readSession(request);
   const subject = session?.user?.sub;
 
-  if (!subject) {
+  if (typeof subject !== 'string' || subject.trim().length === 0) {
     throw new ClientContextError(401, 'UNAUTHENTICATED');
   }
 
-  const identity = await repository.findAuthIdentity('AUTH0', subject);
-  const account = identity
-    ? await repository.findUserAccount(identity.userAccountId)
-    : null;
-  const client = account
-    ? await repository.findClientByUserAccountId(account.id)
-    : null;
-
+  const provider: AuthIdentityRecord['provider'] =
+    process.env.NODE_ENV === 'test' ? 'MOCK' : 'AUTH0';
+  const identity = await repository.findAuthIdentity(provider, subject);
   if (
     !identity ||
+    identity.provider !== provider ||
+    identity.externalSubject !== subject
+  ) {
+    throw new ClientContextError(403, 'UNAUTHORIZED');
+  }
+
+  const account = await repository.findUserAccount(identity.userAccountId);
+  if (
     !account ||
+    account.id !== identity.userAccountId ||
     account.role !== 'CLIENT' ||
-    account.status !== 'ACTIVE' ||
+    account.status !== 'ACTIVE'
+  ) {
+    throw new ClientContextError(403, 'UNAUTHORIZED');
+  }
+
+  const client = await repository.findClientByUserAccountId(account.id);
+  if (
     !client ||
+    client.userAccountId !== account.id ||
     client.status !== 'ACTIVE'
   ) {
     throw new ClientContextError(403, 'UNAUTHORIZED');
@@ -91,4 +102,13 @@ export async function resolveClientContext(
     clientId: client.id,
     subject,
   };
+}
+
+export function assertClientIdMatchesContext(
+  context: ClientAuthContext,
+  requestedClientId: string | null | undefined,
+): void {
+  if (requestedClientId != null && requestedClientId !== context.clientId) {
+    throw new ClientContextError(403, 'UNAUTHORIZED');
+  }
 }
