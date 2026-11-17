@@ -62,13 +62,18 @@ pnpm nx build api --configuration=production
 ```
 
 Las pruebas de integración de reservas requieren una base PostgreSQL aislada,
-identificada por `TEST_DATABASE_URL` con el token `test` en el host o en el
-nombre de la base de datos. El runner aplica las migraciones antes de ejecutar
-la suite:
+distinta de `DATABASE_URL` e identificada por `TEST_DATABASE_URL` con el token
+`test` en el host o en el nombre de la base de datos. El runner carga `.env`,
+aplica las migraciones antes de ejecutar la suite y rechaza destinos ambiguos:
 
 ```sh
 pnpm test:api:integration
 ```
+
+Si el destino es realmente exclusivo y desechable para pruebas, pero coincide
+con `DATABASE_URL` o no tiene ese marcador, se puede confirmar solo para una
+ejecución configurando `CONFIRM_TEST_DATABASE_ISOLATED=true` en el entorno del
+proceso. No guardes esa confirmación en `.env`.
 
 La compilación Angular genera sus artefactos en `dist/apps/web`. Para
 validar OpenSpec y ver qué cambios están activos:

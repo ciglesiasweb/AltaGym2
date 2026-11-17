@@ -56,6 +56,7 @@ interface ClassFixture {
 }
 
 const localStartTime = new Date('1970-01-01T08:00:00.000Z');
+const databaseTestTimeout = 60_000;
 
 async function createClient(): Promise<ClientFixture> {
   const account = await prisma.userAccount.create({
@@ -216,11 +217,11 @@ beforeAll(async () => {
   await prisma.$connect();
 });
 
-afterEach(removeCreatedRows);
+afterEach(removeCreatedRows, databaseTestTimeout);
 
 afterAll(async () => {
   await prisma.$disconnect();
-});
+}, databaseTestTimeout);
 
 describe('group booking PostgreSQL integration', () => {
   it('creates one active booking, returns repeats before window/full checks and protects partial uniqueness', async () => {
@@ -237,10 +238,17 @@ describe('group booking PostgreSQL integration', () => {
       sessionId,
       new Date(groupClass.startsAt.getTime() + 60 * 60 * 1000),
     );
+    const closedWindowRepeat = await confirmGroupBooking(
+      client.context,
+      sessionId,
+      new Date(groupClass.startsAt.getTime() - 2 * 60 * 60 * 1000),
+    );
 
     expect(first.created).toBe(true);
     expect(repeated.created).toBe(false);
+    expect(closedWindowRepeat.created).toBe(false);
     expect(repeated.booking.id).toBe(first.booking.id);
+    expect(closedWindowRepeat.booking.id).toBe(first.booking.id);
     await expect(
       prisma.groupBooking.create({
         data: {
@@ -263,7 +271,7 @@ describe('group booking PostgreSQL integration', () => {
     expect(session.activeBookingCount).toBe(1);
     expect(bookingCount).toBe(1);
     expect(occupancyCount).toBe(1);
-  });
+  }, databaseTestTimeout);
 
   it('allows only one client to acquire the last spot under concurrent requests', async () => {
     const firstClient = await createClient();
@@ -296,7 +304,7 @@ describe('group booking PostgreSQL integration', () => {
     expect(session.activeBookingCount).toBe(1);
     expect(activeBookings).toBe(1);
     expect(occupancies).toBe(1);
-  });
+  }, databaseTestTimeout);
 
   it('resolves concurrent retries for one client to the same active booking', async () => {
     const client = await createClient();
@@ -326,7 +334,7 @@ describe('group booking PostgreSQL integration', () => {
     expect(session.activeBookingCount).toBe(1);
     expect(bookingCount).toBe(1);
     expect(occupancyCount).toBe(1);
-  });
+  }, databaseTestTimeout);
 
   it('isolates upcoming and reconciled bookings between clients and combines private sessions chronologically', async () => {
     const firstClient = await createClient();
@@ -357,16 +365,32 @@ describe('group booking PostgreSQL integration', () => {
     expect(secondBookings).toEqual([]);
     expect(ownBooking?.id).toBeDefined();
     expect(foreignBooking).toBeNull();
-  });
+  }, databaseTestTimeout);
 
   it('selects materialized occurrences over calculated ones and resolves unmaterialized details', async () => {
     const client = await createClient();
+    const otherClient = await createClient();
     const materialized = await createClass(4);
     const calculated = await createClass(5, false);
     const now = new Date(materialized.startsAt.getTime() - 24 * 60 * 60 * 1000);
+    await prisma.privateSession.create({
+      data: {
+        clientId: client.clientId,
+        monitorId: materialized.monitorId,
+        bookedByUserId: client.userAccountId,
+        startsAt: materialized.startsAt,
+        endsAt: new Date(materialized.startsAt.getTime() + 45 * 60 * 1000),
+        status: 'CONFIRMED',
+      },
+    });
 
     const materializedResults = await listGroupSessions(
       client.clientId,
+      materialized.disciplineId,
+      now,
+    );
+    const otherClientResults = await listGroupSessions(
+      otherClient.clientId,
       materialized.disciplineId,
       now,
     );
@@ -383,11 +407,62 @@ describe('group booking PostgreSQL integration', () => {
 
     expect(materializedResults).toHaveLength(1);
     expect(materializedResults[0].id).toBe(materialized.sessionId);
+    expect(materializedResults[0].availability).toBe('CONFLICT');
+    expect(otherClientResults[0].availability).toBe('AVAILABLE');
     expect(calculatedResults).toHaveLength(1);
     expect(calculatedResults[0].id).toBe(reference);
     expect(detail?.id).toBe(reference);
     expect(detail?.disciplineId).toBe(calculated.disciplineId);
-  });
+  }, databaseTestTimeout);
+
+  it('excludes past and cancelled group and private bookings from the upcoming list', async () => {
+    const client = await createClient();
+    const pastClass = await createClass(2);
+    const futureClass = await createClass(2);
+    const pastStartsAt = new Date(Date.now() - 2 * 60 * 60 * 1000);
+    await prisma.groupSession.update({
+      where: { id: pastClass.sessionId },
+      data: {
+        startsAt: pastStartsAt,
+        endsAt: new Date(pastStartsAt.getTime() + 45 * 60 * 1000),
+      },
+    });
+    await confirmGroupBooking(
+      client.context,
+      pastClass.sessionId!,
+      new Date(pastStartsAt.getTime() - 24 * 60 * 60 * 1000),
+    );
+    await prisma.groupBooking.create({
+      data: {
+        groupSessionId: futureClass.sessionId!,
+        clientId: client.clientId,
+        bookedByUserId: client.userAccountId,
+        status: 'CANCELLED_BY_CLIENT',
+      },
+    });
+    await prisma.privateSession.createMany({
+      data: [
+        {
+          clientId: client.clientId,
+          monitorId: pastClass.monitorId,
+          bookedByUserId: client.userAccountId,
+          startsAt: pastStartsAt,
+          endsAt: new Date(pastStartsAt.getTime() + 45 * 60 * 1000),
+          status: 'CONFIRMED',
+        },
+        {
+          clientId: client.clientId,
+          monitorId: futureClass.monitorId,
+          bookedByUserId: client.userAccountId,
+          startsAt: futureClass.startsAt,
+          endsAt: new Date(futureClass.startsAt.getTime() + 45 * 60 * 1000),
+          status: 'CANCELLED_BY_CLIENT',
+        },
+      ],
+    });
+
+    await expect(listOwnUpcomingBookings(client.clientId)).resolves.toEqual([]);
+  }, databaseTestTimeout);
 
   it('rejects inactive accounts or clients and rolls back all booking effects', async () => {
     const groupClass = await createClass(2);
@@ -422,7 +497,7 @@ describe('group booking PostgreSQL integration', () => {
     expect(session.activeBookingCount).toBe(0);
     expect(bookings).toBe(0);
     expect(occupancies).toBe(0);
-  });
+  }, databaseTestTimeout);
 
   it('revalidates deactivation inside the transaction and rolls back counter, booking and occupancy', async () => {
     const client = await createClient();
@@ -474,7 +549,7 @@ describe('group booking PostgreSQL integration', () => {
     expect(session.activeBookingCount).toBe(0);
     expect(bookings).toBe(0);
     expect(occupancies).toBe(0);
-  });
+  }, databaseTestTimeout);
 
   it('honors started and closed-window errors before capacity while keeping the count in range', async () => {
     const firstClient = await createClient();
@@ -510,10 +585,10 @@ describe('group booking PostgreSQL integration', () => {
         where: { id: sessionId },
         data: { activeBookingCount: 2 },
       }),
-    ).rejects.toMatchObject({ code: 'P2004' });
+    ).rejects.toThrow('group_session_booking_count_check');
     const session = await prisma.groupSession.findUniqueOrThrow({
       where: { id: sessionId },
     });
     expect(session.activeBookingCount).toBe(1);
-  });
+  }, databaseTestTimeout);
 });

@@ -17,7 +17,7 @@
 - [x] 3.1 Integrar el contexto autenticado en las consultas de sesiones y reservas propias y en la confirmación de reserva grupal, para que el `clientId` efectivo proceda del servidor y no sea obligatorio en el cuerpo; verificar el recorrido del propio cliente desde `Mis reservas` hasta la confirmación y la consulta actualizada, incluida la sesión caducada sin reenvío automático.
 - [ ] 3.2 Rechazar siempre con la misma respuesta neutra cualquier `clientId` enviado que no coincida con la identidad de sesión, sin consultar el cliente ajeno, y mantener el mismo aislamiento en consultas, incluida la reconciliación por sesión, y en creación, modificación y cancelación; verificar el escenario cliente A contra cliente B existente y no existente sin efectos ni filtración.
 - [x] 3.3 Añadir pruebas con identidades `MOCK` estables para sesión válida mediante cookie BFF, sesión ausente o invalidada, cuenta o cliente inactivo, identidad no vinculada y acceso cruzado; verificar que `MOCK` solo se usa en pruebas, CORS credentialed se restringe al origen permitido, el rechazo CSRF por origen ocurre antes del middleware/efecto y la respuesta 401 es neutra y lleva al login sin reintentar mutaciones.
-- [ ] 3.4 Integrar y verificar el requisito de reservas de revalidar cuenta y cliente activos y vinculados dentro de la transacción justo antes de confirmar; probar la desactivación entre resolución y confirmación con `403` neutro y sin confirmar reserva, aforo ni ocupación.
+- [x] 3.4 Integrar y verificar el requisito de reservas de revalidar cuenta y cliente activos y vinculados dentro de la transacción justo antes de confirmar; probar la desactivación entre resolución y confirmación con `403` neutro y sin confirmar reserva, aforo ni ocupación.
 
 ## 4. Integración
 
