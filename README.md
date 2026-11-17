@@ -42,6 +42,10 @@ Arranca el frontend Angular en `http://localhost:4200`:
 pnpm nx serve web
 ```
 
+El servidor de desarrollo reenvía `/api/*` y `/auth/*` a la API en
+`http://localhost:3000`; arranca también la API en otra terminal para usar las
+funciones de reservas.
+
 Arranca la API Next.js en la URL que indique Nx, normalmente
 `http://localhost:3000`, y comprueba su endpoint de salud:
 
@@ -49,6 +53,11 @@ Arranca la API Next.js en la URL que indique Nx, normalmente
 pnpm nx serve api
 curl http://localhost:3000/api/health
 ```
+
+La API requiere `WEB_ORIGIN` y `APP_BASE_URL` en `apps/api/.env`, ambos con
+`http://localhost:4200` para desarrollo local. Para iniciar sesión, configura
+también allí las credenciales de Auth0 indicadas en
+[`apps/api/.env.example`](apps/api/.env.example); no compartas esos secretos.
 
 El resultado esperado es `{"status":"ok"}` con HTTP 200.
 
