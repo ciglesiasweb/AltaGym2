@@ -1,0 +1,48 @@
+<main class="page" id="main-content">
+  <a
+    class="back-link"
+    routerLink="/reservar"
+    [queryParams]="{ disciplineId: disciplineId() }"
+  >
+    Volver a las clases
+  </a>
+
+  @if (loading()) {
+    <p role="status">Actualizando los datos de la clase…</p>
+  } @else if (error()) {
+    <section class="notice" role="alert">
+      <p>{{ error() }}</p>
+      <a class="secondary-link" routerLink="/reservar">Volver a las clases</a>
+    </section>
+  } @else if (session(); as currentSession) {
+    <header class="page-header">
+      <p class="eyebrow">Clase grupal · {{ currentSession.discipline }}</p>
+      <h1>{{ currentSession.date }} · {{ currentSession.time }}</h1>
+      <p>{{ currentSession.durationMinutes }} min · Monitor: {{ currentSession.monitor }}</p>
+      <p>Sala: {{ currentSession.room }}</p>
+    </header>
+
+    <section class="session-summary" aria-label="Disponibilidad actual">
+      <p>{{ availabilityMessage(currentSession) }}</p>
+      <p>Aforo: {{ currentSession.capacity }} plazas</p>
+      <p>La disponibilidad se comprobará de nuevo al confirmar.</p>
+    </section>
+
+    @if (currentSession.reservable) {
+      <a
+        class="primary-link"
+        [routerLink]="['/reservar', currentSession.id, 'confirmar']"
+        [queryParams]="{ disciplineId: disciplineId() }"
+      >
+        Reservar esta clase
+      </a>
+    } @else if (currentSession.isBookedByClient) {
+      <a class="primary-link" [routerLink]="['/reservar', currentSession.id, 'resultado']">
+        Ver mi reserva
+      </a>
+      <a class="secondary-link" routerLink="/reservas">Ir a Mis reservas</a>
+    } @else {
+      <a class="secondary-link" routerLink="/reservar">Elegir otra clase</a>
+    }
+  }
+</main>

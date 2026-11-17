@@ -1,0 +1,59 @@
+<main class="page" id="main-content">
+  <a
+    class="back-link"
+    [routerLink]="['/reservar', groupSessionId()]"
+    [queryParams]="{ disciplineId: disciplineId() }"
+  >
+    Volver al detalle
+  </a>
+
+  <header class="page-header">
+    <p class="eyebrow">Confirmación de reserva</p>
+    <h1>Revisa tu clase</h1>
+  </header>
+
+  @if (loading()) {
+    <p role="status">Comprobando la disponibilidad actual…</p>
+  } @else if (error()) {
+    <section class="notice" role="alert">
+      <p>{{ error() }}</p>
+      <button class="secondary-button" type="button" (click)="load()">Actualizar clase</button>
+    </section>
+  } @else if (session(); as currentSession) {
+    <section class="session-summary">
+      <p class="eyebrow">{{ currentSession.discipline }} · Clase grupal</p>
+      <h2>{{ currentSession.date }} · {{ currentSession.time }}</h2>
+      <p>{{ currentSession.durationMinutes }} min · Monitor: {{ currentSession.monitor }}</p>
+      <p>Sala: {{ currentSession.room }}</p>
+      <p>{{ currentSession.availableSpots }} plazas disponibles de {{ currentSession.capacity }}</p>
+    </section>
+
+    @if (currentSession.reservable) {
+      <p>La plaza y las reglas se comprobarán otra vez al confirmar.</p>
+      <button
+        class="primary-button"
+        type="button"
+        [disabled]="confirming()"
+        (click)="confirm()"
+      >
+        {{ confirming() ? 'Confirmando…' : 'Confirmar reserva' }}
+      </button>
+    } @else if (currentSession.isBookedByClient) {
+      <p>Ya tienes esta clase reservada.</p>
+      <a class="secondary-link" [routerLink]="['/reservar', currentSession.id, 'resultado']">
+        Ver el resultado
+      </a>
+    } @else {
+      <p role="status">{{ currentSession.availability === 'FULL'
+        ? 'La clase está completa y no admite nuevas reservas.'
+        : currentSession.availability === 'WINDOW_CLOSED'
+          ? 'La ventana de reserva está cerrada.'
+          : currentSession.hasConflict
+            ? 'Ya tienes otra actividad en ese horario.'
+            : 'La clase ya no está disponible para reservar.' }}</p>
+      <a class="secondary-link" routerLink="/reservar">Elegir otra clase</a>
+    }
+  }
+
+  <a class="secondary-link" routerLink="/reservas">Volver a Mis reservas</a>
+</main>

@@ -1,0 +1,88 @@
+.page {
+  margin: 0 auto;
+  max-width: 48rem;
+  padding: 1.5rem;
+}
+
+.page-header {
+  display: grid;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+}
+
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+h1 {
+  font-size: clamp(1.75rem, 6vw, 2.5rem);
+}
+
+h2 {
+  font-size: 1.15rem;
+}
+
+.eyebrow {
+  color: #536273;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.primary-link,
+.secondary-button {
+  align-items: center;
+  border: 0;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  font-weight: 700;
+  justify-content: center;
+  min-height: 2.75rem;
+  padding: 0.65rem 1rem;
+  text-decoration: none;
+  width: fit-content;
+}
+
+.primary-link {
+  background: #164e8a;
+  color: white;
+}
+
+.secondary-button {
+  background: #e8eef5;
+  color: #18324b;
+}
+
+.booking-list {
+  display: grid;
+  gap: 1rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.booking-card,
+.notice,
+.empty-state {
+  border: 1px solid #d5dde6;
+  border-radius: 0.75rem;
+  padding: 1rem;
+}
+
+.booking-card > div {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.notice {
+  display: grid;
+  gap: 0.75rem;
+}
+
+:focus-visible {
+  outline: 3px solid #ef9b20;
+  outline-offset: 3px;
+}

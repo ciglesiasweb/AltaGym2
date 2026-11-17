@@ -1,5 +1,9 @@
-<main class="p-6">
-  <h1>AltaGym2</h1>
-  <p>Base de la aplicación</p>
-  <button mat-flat-button type="button">AltaGym2</button>
-</main>
+<a class="skip-link" href="#main-content">Saltar al contenido</a>
+<header class="app-header">
+  <a class="brand" routerLink="/reservas">AltaGym</a>
+  <nav aria-label="Navegación principal">
+    <a routerLink="/reservas">Mis reservas</a>
+    <a routerLink="/reservar">Reservar clase</a>
+  </nav>
+</header>
+<router-outlet />

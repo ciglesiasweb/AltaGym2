@@ -8,6 +8,7 @@
   "scripts": {
     "dev:web": "nx serve web",
     "dev:api": "nx serve api",
+    "test:api:integration": "node scripts/run-api-integration-tests.mjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -37,6 +38,7 @@
     "jsdom": "^27.1.0",
     "nx": "24.0.6",
     "postcss": "8.5.33",
+    "prisma": "6.19.0",
     "tailwindcss": "4.3.5",
     "tslib": "^2.3.0",
     "typescript": "6.0.3",
@@ -53,6 +55,7 @@
     "@angular/material": "22.2.7",
     "@angular/platform-browser": "22.2.6",
     "@angular/router": "22.2.6",
+    "@prisma/client": "6.19.0",
     "next": "16.4.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

@@ -1,0 +1,51 @@
+.page {
+  display: grid;
+  gap: 1rem;
+  margin: 0 auto;
+  max-width: 42rem;
+  padding: 1.5rem;
+}
+
+h1,
+p {
+  margin: 0;
+}
+
+h1 {
+  font-size: clamp(1.75rem, 6vw, 2.5rem);
+}
+
+.eyebrow {
+  color: #536273;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.primary-link,
+.secondary-link,
+.secondary-button {
+  align-items: center;
+  background: #e8eef5;
+  border: 0;
+  border-radius: 0.5rem;
+  color: #18324b;
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  font-weight: 700;
+  justify-content: center;
+  min-height: 2.75rem;
+  padding: 0.65rem 1rem;
+  text-decoration: none;
+  width: fit-content;
+}
+
+.primary-link {
+  background: #164e8a;
+  color: white;
+}
+
+:focus-visible {
+  outline: 3px solid #ef9b20;
+  outline-offset: 3px;
+}

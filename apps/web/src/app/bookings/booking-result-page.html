@@ -1,0 +1,32 @@
+<main class="page" id="main-content" aria-live="polite">
+  @switch (result()) {
+    @case ('checking') {
+      <p class="eyebrow">Confirmación de reserva</p>
+      <h1>Comprobando el resultado</h1>
+      <p>Estamos consultando tu reserva antes de mostrar un resultado.</p>
+      <button class="secondary-button" type="button" (click)="reconcile()">Comprobar de nuevo</button>
+    }
+    @case ('confirmed') {
+      <p class="eyebrow">Reserva confirmada</p>
+      <h1>Tu plaza está reservada</h1>
+      <p>{{ booking()?.startsAt | date:'fullDate' }} · {{ booking()?.startsAt | date:'shortTime' }}</p>
+      <a class="primary-link" routerLink="/reservas">Volver a Mis reservas</a>
+    }
+    @case ('not-found') {
+      <p class="eyebrow">Resultado comprobado</p>
+      <h1>No encontramos una reserva activa</h1>
+      <p>Puedes volver a intentarlo. Las confirmaciones repetidas no crean otra reserva.</p>
+      <a class="primary-link" [routerLink]="['/reservar', groupSessionId(), 'confirmar']">
+        Volver a confirmar
+      </a>
+      <a class="secondary-link" routerLink="/reservas">Volver a Mis reservas</a>
+    }
+    @case ('unknown') {
+      <p class="eyebrow">Resultado pendiente</p>
+      <h1>No se pudo determinar el resultado</h1>
+      <p>No confirmamos ni rechazamos la reserva. Comprueba el resultado de nuevo antes de continuar.</p>
+      <button class="secondary-button" type="button" (click)="reconcile()">Comprobar de nuevo</button>
+      <a class="secondary-link" routerLink="/reservas">Volver a Mis reservas</a>
+    }
+  }
+</main>

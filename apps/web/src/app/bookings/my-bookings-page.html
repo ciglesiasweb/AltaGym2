@@ -1,0 +1,34 @@
+<main class="page" id="main-content">
+  <header class="page-header">
+    <p class="eyebrow">Tu actividad</p>
+    <h1>Mis reservas</h1>
+    <a class="primary-link" routerLink="/reservar">Reservar clase grupal</a>
+  </header>
+
+  @if (loading()) {
+    <p role="status">Cargando tus reservas…</p>
+  } @else if (error()) {
+    <section class="notice" role="alert">
+      <p>{{ error() }}</p>
+      <button type="button" class="secondary-button" (click)="load()">Reintentar</button>
+    </section>
+  } @else if (bookings().length === 0) {
+    <p class="empty-state">Todavía no tienes próximas reservas.</p>
+  } @else {
+    <ol class="booking-list" aria-label="Próximas reservas">
+      @for (booking of bookings(); track booking.id) {
+        <li class="booking-card">
+          <div>
+            <p class="eyebrow">{{ booking.type === 'GROUP' ? 'Clase grupal' : 'Sesión privada' }}</p>
+            <h2>{{ booking.type === 'GROUP' ? booking.discipline : 'Sesión privada' }}</h2>
+            <p>{{ booking.date }} · {{ booking.time }} · 45 min</p>
+            <p>Monitor: {{ booking.monitor }}</p>
+            @if (booking.room) {
+              <p>Sala: {{ booking.room }}</p>
+            }
+          </div>
+        </li>
+      }
+    </ol>
+  }
+</main>

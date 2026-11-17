@@ -1,0 +1,64 @@
+.page {
+  margin: 0 auto;
+  max-width: 42rem;
+  padding: 1.5rem;
+}
+
+.page-header,
+.session-summary,
+.notice {
+  display: grid;
+  gap: 0.75rem;
+  margin: 1.5rem 0;
+}
+
+h1,
+p {
+  margin: 0;
+}
+
+h1 {
+  font-size: clamp(1.75rem, 6vw, 2.5rem);
+}
+
+.eyebrow {
+  color: #536273;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.session-summary,
+.notice {
+  border: 1px solid #d5dde6;
+  border-radius: 0.75rem;
+  padding: 1rem;
+}
+
+.primary-link,
+.secondary-link {
+  align-items: center;
+  border-radius: 0.5rem;
+  display: inline-flex;
+  font: inherit;
+  font-weight: 700;
+  justify-content: center;
+  margin: 0.25rem 0.5rem 0.25rem 0;
+  min-height: 2.75rem;
+  padding: 0.65rem 1rem;
+  text-decoration: none;
+}
+
+.primary-link {
+  background: #164e8a;
+  color: white;
+}
+
+.secondary-link {
+  background: #e8eef5;
+  color: #18324b;
+}
+
+:focus-visible {
+  outline: 3px solid #ef9b20;
+  outline-offset: 3px;
+}

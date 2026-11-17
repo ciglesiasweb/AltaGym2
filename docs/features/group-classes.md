@@ -35,6 +35,37 @@ No incluye lista de espera ni automatización de festivos o cierres generales.
 4. Selecciona una sesión disponible.
 5. Confirma la reserva.
 
+## API de reservas implementada
+
+Las rutas de cliente requieren la sesión BFF autenticada. El servidor obtiene el
+`sub` verificado y resuelve `AuthIdentity` → `UserAccount` → `Client`; el
+`clientId` efectivo nunca procede del cuerpo ni de la query. Si se envía un
+`clientId`, debe coincidir con el contexto autenticado. Las respuestas usan
+`Cache-Control: no-store`.
+
+| Operación | Ruta | Respuesta |
+| --- | --- | --- |
+| Consultar disciplinas activas | `GET /api/disciplines` | `200 { "disciplines": [...] }` |
+| Consultar sesiones de una disciplina para las próximas 72 horas | `GET /api/group-sessions?disciplineId=<id>` | `200 { "sessions": [...] }` |
+| Consultar el detalle actual de una sesión u ocurrencia | `GET /api/group-sessions/{groupSessionId}` | `200 { "session": ... }` |
+| Consultar próximas reservas grupales y sesiones privadas propias | `GET /api/bookings` | `200 { "bookings": [...] }` |
+| Reconciliar la reserva propia de una sesión, sin límite de fecha | `GET /api/group-sessions/{groupSessionId}/my-booking` | `200 { "booking": ... }` o `{ "booking": null }` |
+| Confirmar una reserva grupal propia | `POST /api/group-sessions/{groupSessionId}/bookings` | `201` nueva; `200` existente, ambas con `{ "booking": ... }` |
+
+La confirmación acepta `{}`; un `clientId` opcional solo se admite si coincide
+con el cliente autenticado. Repetir la solicitud devuelve la reserva vigente
+existente sin descontar otra plaza. Los conflictos de negocio responden `409`
+con `SESSION_STARTED`, `BOOKING_WINDOW_CLOSED`, `CAPACITY_EXCEEDED`,
+`SESSION_UNAVAILABLE` o `BOOKING_CONFLICT`. La sesión inválida responde `401` y
+los rechazos de autorización `403`, ambos con `{ "error": "UNAUTHORIZED" }`.
+La consulta de sesiones requiere `disciplineId` (`400 DISCIPLINE_REQUIRED`) y
+un detalle no disponible responde `404 SESSION_UNAVAILABLE`. Las rutas rechazan
+un `clientId` ajeno con el mismo `403` neutro, sin consultar su existencia.
+
+Esta capacidad implementa consultas y confirmación de reservas propias. La
+cancelación, la lista de espera y las operaciones de recepción siguen fuera de
+su alcance.
+
 ## Información visible
 
 Tipo, nombre, fecha, hora, duración, monitor, sala, aforo, plazas disponibles y estado.

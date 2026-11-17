@@ -1,0 +1,82 @@
+import { HttpErrorResponse } from '@angular/common/http';
+import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { BookingApi, type GroupSession } from './booking-api';
+import { bookingErrorMessage } from './booking-message';
+
+@Component({
+  selector: 'app-booking-confirmation-page',
+  imports: [RouterLink],
+  templateUrl: './booking-confirmation-page.html',
+  styleUrl: './booking-confirmation-page.scss',
+})
+export class BookingConfirmationPage {
+  private readonly api = inject(BookingApi);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
+  readonly groupSessionId = signal('');
+  readonly disciplineId = signal('');
+  readonly session = signal<GroupSession | null>(null);
+  readonly loading = signal(true);
+  readonly confirming = signal(false);
+  readonly error = signal('');
+
+  constructor() {
+    this.route.queryParamMap
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((parameters) => this.disciplineId.set(parameters.get('disciplineId') ?? ''));
+    this.route.paramMap
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((parameters) => {
+        const id = parameters.get('groupSessionId');
+        if (id) {
+          this.groupSessionId.set(id);
+          void this.load(id);
+        }
+      });
+  }
+
+  async load(id = this.groupSessionId()): Promise<void> {
+    this.loading.set(true);
+    this.error.set('');
+    try {
+      this.session.set(await this.api.getGroupSession(id));
+    } catch (error) {
+      this.session.set(null);
+      this.error.set(bookingErrorMessage(error));
+    } finally {
+      this.loading.set(false);
+    }
+  }
+
+  async confirm(): Promise<void> {
+    const id = this.groupSessionId();
+    const session = this.session();
+    if (!id || !session?.reservable || this.confirming()) {
+      return;
+    }
+
+    this.confirming.set(true);
+    this.error.set('');
+    try {
+      await this.api.confirmGroupBooking(id);
+      await this.router.navigate(['/reservar', id, 'resultado']);
+    } catch (error) {
+      if (
+        error instanceof HttpErrorResponse &&
+        (error.status === 0 || error.status >= 500)
+      ) {
+        await this.router.navigate(['/reservar', id, 'resultado'], {
+          state: { confirmationUncertain: true },
+        });
+        return;
+      }
+
+      this.error.set(bookingErrorMessage(error));
+    } finally {
+      this.confirming.set(false);
+    }
+  }
+}

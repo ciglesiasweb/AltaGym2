@@ -1,0 +1,64 @@
+<main class="page" id="main-content">
+  <a class="back-link" routerLink="/reservas">Volver a Mis reservas</a>
+  <header class="page-header">
+    <p class="eyebrow">Clases de las próximas 72 horas</p>
+    <h1>Reservar clase grupal</h1>
+  </header>
+
+  <label class="field-label" for="discipline">Elige una disciplina</label>
+  @if (loadingDisciplines()) {
+    <p role="status">Cargando disciplinas…</p>
+  } @else if (disciplines().length === 0 && !error()) {
+    <p>No hay disciplinas con próximas clases disponibles.</p>
+  } @else {
+    <select
+      id="discipline"
+      [ngModel]="selectedDisciplineId()"
+      (ngModelChange)="selectDiscipline($event)"
+      aria-describedby="discipline-help"
+    >
+      <option value="">Selecciona una disciplina</option>
+      @for (discipline of disciplines(); track discipline.id) {
+        <option [value]="discipline.id">{{ discipline.name }}</option>
+      }
+    </select>
+    <p id="discipline-help" class="hint">La disponibilidad se volverá a comprobar al confirmar.</p>
+  }
+
+  @if (error()) {
+    <section class="notice" role="alert">
+      <p>{{ error() }}</p>
+      <button class="secondary-button" type="button" (click)="loadSessions()">Reintentar</button>
+    </section>
+  } @else if (selectedDisciplineId() && loading()) {
+    <p role="status">Cargando clases…</p>
+  } @else if (selectedDisciplineId() && groupedSessions().length === 0) {
+    <p class="empty-state">No hay próximas clases de esta disciplina.</p>
+  } @else {
+    @for (group of groupedSessions(); track group.date) {
+      <section class="date-group" [attr.aria-labelledby]="'date-' + group.date">
+        <h2 [id]="'date-' + group.date">{{ group.date }}</h2>
+        <ul class="session-list">
+          @for (session of group.sessions; track session.id) {
+            <li class="session-card">
+              <div class="session-copy">
+                <p class="eyebrow">Clase grupal · {{ session.discipline }}</p>
+                <h3>{{ session.time }} · {{ session.durationMinutes }} min</h3>
+                <p>Monitor: {{ session.monitor }} · Sala: {{ session.room }}</p>
+                <p>{{ availabilityLabel(session) }}</p>
+              </div>
+              <a
+                class="secondary-link"
+                [routerLink]="['/reservar', session.id]"
+                [queryParams]="{ disciplineId: selectedDisciplineId() }"
+                [attr.aria-label]="'Ver clase de ' + session.discipline + ' a las ' + session.time"
+              >
+                Ver clase
+              </a>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+  }
+</main>

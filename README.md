@@ -8,11 +8,11 @@ especificación de OpenSpec.
 
 El producto previsto es una aplicación de reservas para un gimnasio: debe
 permitir consultar clases y reservar o cancelar plazas y sesiones privadas.
-Hoy el repositorio solo contiene la base técnica inicial, no la funcionalidad
-de reservas. La pantalla Angular muestra la base de la aplicación y la API
-expone únicamente `GET /api/health`, que devuelve `{"status":"ok"}`.
-La orquestación de agentes también es trabajo futuro; todavía no está
-implementada.
+El workspace ya incluye un primer recorrido de reservas grupales para clientes:
+consultas autenticadas, confirmación idempotente y sus pantallas web. La API
+también expone `GET /api/health`, que devuelve `{"status":"ok"}`. La cancelación,
+la lista de espera, las operaciones de recepción y la orquestación de agentes
+siguen fuera de la capacidad implementada.
 
 ## Requisitos y versiones
 
@@ -56,8 +56,18 @@ Comprobaciones no interactivas:
 
 ```sh
 pnpm nx test web
+pnpm exec vitest run apps/api/src
 pnpm nx build web --configuration=production
 pnpm nx build api --configuration=production
+```
+
+Las pruebas de integración de reservas requieren una base PostgreSQL aislada,
+identificada por `TEST_DATABASE_URL` con el token `test` en el host o en el
+nombre de la base de datos. El runner aplica las migraciones antes de ejecutar
+la suite:
+
+```sh
+pnpm test:api:integration
 ```
 
 La compilación Angular genera sus artefactos en `dist/apps/web`. Para

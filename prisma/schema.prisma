@@ -1,0 +1,247 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  CLIENT
+  MONITOR
+  RECEPTION
+}
+
+enum AccountStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum AuthProvider {
+  AUTH0
+  MOCK
+}
+
+enum ProfileStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum CatalogStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum GroupScheduleStatus {
+  ACTIVE
+  DELETED
+}
+
+enum GroupSessionStatus {
+  SCHEDULED
+  CANCELLED
+}
+
+enum GroupBookingStatus {
+  ACTIVE
+  CANCELLED_BY_CLIENT
+  CANCELLED_BY_GYM
+}
+
+enum PrivateSessionStatus {
+  CONFIRMED
+  CANCELLED_BY_CLIENT
+  CANCELLED_BY_GYM
+}
+
+model UserAccount {
+  id                    String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  role                  UserRole
+  status                AccountStatus    @default(ACTIVE)
+  identities            AuthIdentity[]
+  client                Client?
+  bookedGroupBookings   GroupBooking[]   @relation("GroupBookingBookedBy")
+  bookedPrivateSessions PrivateSession[] @relation("PrivateSessionBookedBy")
+  createdAt             DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt             DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("user_account")
+}
+
+model AuthIdentity {
+  id              String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userAccountId   String       @map("user_account_id") @db.Uuid
+  provider        AuthProvider
+  externalSubject String       @map("external_subject") @db.VarChar(255)
+  userAccount     UserAccount  @relation(fields: [userAccountId], references: [id], onDelete: Restrict)
+  createdAt       DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([provider, externalSubject])
+  @@unique([userAccountId, provider])
+  @@map("auth_identity")
+}
+
+model Client {
+  id                  String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userAccountId       String              @unique @map("user_account_id") @db.Uuid
+  firstName           String              @map("first_name") @db.VarChar(100)
+  lastNames           String              @map("last_names") @db.VarChar(200)
+  status              ProfileStatus       @default(ACTIVE)
+  userAccount         UserAccount         @relation(fields: [userAccountId], references: [id], onDelete: Restrict)
+  groupBookings       GroupBooking[]
+  privateSessions     PrivateSession[]
+  scheduleOccupancies ScheduleOccupancy[]
+  createdAt           DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt           DateTime            @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("client")
+}
+
+model Discipline {
+  id                String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name              String                  @db.VarChar(100)
+  status            CatalogStatus           @default(ACTIVE)
+  scheduleRevisions GroupScheduleRevision[]
+  groupSessions     GroupSession[]
+
+  @@map("discipline")
+}
+
+model Monitor {
+  id                String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  firstName         String                  @map("first_name") @db.VarChar(100)
+  lastNames         String                  @map("last_names") @db.VarChar(200)
+  status            ProfileStatus           @default(ACTIVE)
+  scheduleRevisions GroupScheduleRevision[]
+  groupSessions     GroupSession[]
+  privateSessions   PrivateSession[]
+
+  @@map("monitor")
+}
+
+model Room {
+  id                String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name              String                  @db.VarChar(100)
+  status            CatalogStatus           @default(ACTIVE)
+  scheduleRevisions GroupScheduleRevision[]
+  groupSessions     GroupSession[]
+
+  @@map("room")
+}
+
+model GroupSchedule {
+  id        String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  status    GroupScheduleStatus     @default(ACTIVE)
+  revisions GroupScheduleRevision[]
+  sessions  GroupSession[]
+  createdAt DateTime                @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime                @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("group_schedule")
+}
+
+model GroupScheduleRevision {
+  id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  groupScheduleId String         @map("group_schedule_id") @db.Uuid
+  disciplineId    String         @map("discipline_id") @db.Uuid
+  monitorId       String         @map("monitor_id") @db.Uuid
+  roomId          String         @map("room_id") @db.Uuid
+  weekday         Int
+  localStartTime  DateTime       @map("local_start_time") @db.Time(0)
+  capacity        Int
+  effectiveFrom   DateTime       @map("effective_from") @db.Date
+  effectiveUntil  DateTime?      @map("effective_until") @db.Date
+  groupSchedule   GroupSchedule  @relation(fields: [groupScheduleId], references: [id], onDelete: Restrict)
+  discipline      Discipline     @relation(fields: [disciplineId], references: [id], onDelete: Restrict)
+  monitor         Monitor        @relation(fields: [monitorId], references: [id], onDelete: Restrict)
+  room            Room           @relation(fields: [roomId], references: [id], onDelete: Restrict)
+  sessions        GroupSession[]
+  createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([groupScheduleId, effectiveFrom, effectiveUntil])
+  @@map("group_schedule_revision")
+}
+
+model GroupSession {
+  id                 String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  groupScheduleId    String                @map("group_schedule_id") @db.Uuid
+  scheduleRevisionId String                @map("schedule_revision_id") @db.Uuid
+  disciplineId       String                @map("discipline_id") @db.Uuid
+  monitorId          String                @map("monitor_id") @db.Uuid
+  roomId             String                @map("room_id") @db.Uuid
+  occurrenceDate     DateTime              @map("occurrence_date") @db.Date
+  startsAt           DateTime              @map("starts_at") @db.Timestamptz(3)
+  endsAt             DateTime              @map("ends_at") @db.Timestamptz(3)
+  capacity           Int
+  activeBookingCount Int                   @default(0) @map("active_booking_count")
+  status             GroupSessionStatus    @default(SCHEDULED)
+  groupSchedule      GroupSchedule         @relation(fields: [groupScheduleId], references: [id], onDelete: Restrict)
+  scheduleRevision   GroupScheduleRevision @relation(fields: [scheduleRevisionId], references: [id], onDelete: Restrict)
+  discipline         Discipline            @relation(fields: [disciplineId], references: [id], onDelete: Restrict)
+  monitor            Monitor               @relation(fields: [monitorId], references: [id], onDelete: Restrict)
+  room               Room                  @relation(fields: [roomId], references: [id], onDelete: Restrict)
+  bookings           GroupBooking[]
+  createdAt          DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime              @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([groupScheduleId, occurrenceDate])
+  @@index([startsAt, status])
+  @@index([disciplineId, startsAt])
+  @@map("group_session")
+}
+
+model GroupBooking {
+  id             String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  groupSessionId String             @map("group_session_id") @db.Uuid
+  clientId       String             @map("client_id") @db.Uuid
+  bookedByUserId String             @map("booked_by_user_id") @db.Uuid
+  status         GroupBookingStatus @default(ACTIVE)
+  bookedAt       DateTime           @default(now()) @map("booked_at") @db.Timestamptz(3)
+  groupSession   GroupSession       @relation(fields: [groupSessionId], references: [id], onDelete: Restrict)
+  client         Client             @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  bookedBy       UserAccount        @relation("GroupBookingBookedBy", fields: [bookedByUserId], references: [id], onDelete: Restrict)
+  occupancy      ScheduleOccupancy?
+  createdAt      DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([clientId, status, bookedAt])
+  @@map("group_booking")
+}
+
+model PrivateSession {
+  id             String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clientId       String               @map("client_id") @db.Uuid
+  monitorId      String               @map("monitor_id") @db.Uuid
+  bookedByUserId String               @map("booked_by_user_id") @db.Uuid
+  startsAt       DateTime             @map("starts_at") @db.Timestamptz(3)
+  endsAt         DateTime             @map("ends_at") @db.Timestamptz(3)
+  status         PrivateSessionStatus @default(CONFIRMED)
+  client         Client               @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  monitor        Monitor              @relation(fields: [monitorId], references: [id], onDelete: Restrict)
+  bookedBy       UserAccount          @relation("PrivateSessionBookedBy", fields: [bookedByUserId], references: [id], onDelete: Restrict)
+  occupancy      ScheduleOccupancy?
+  createdAt      DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime             @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([clientId, status, startsAt])
+  @@map("private_session")
+}
+
+model ScheduleOccupancy {
+  id               String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clientId         String          @map("client_id") @db.Uuid
+  groupBookingId   String?         @unique @map("group_booking_id") @db.Uuid
+  privateSessionId String?         @unique @map("private_session_id") @db.Uuid
+  startsAt         DateTime        @map("starts_at") @db.Timestamptz(3)
+  endsAt           DateTime        @map("ends_at") @db.Timestamptz(3)
+  active           Boolean         @default(true)
+  client           Client          @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  groupBooking     GroupBooking?   @relation(fields: [groupBookingId], references: [id], onDelete: Restrict)
+  privateSession   PrivateSession? @relation(fields: [privateSessionId], references: [id], onDelete: Restrict)
+  createdAt        DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  releasedAt       DateTime?       @map("released_at") @db.Timestamptz(3)
+
+  @@index([clientId, active, startsAt])
+  @@map("schedule_occupancy")
+}
