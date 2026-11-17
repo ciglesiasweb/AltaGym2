@@ -14,7 +14,7 @@ Este cambio desbloquea la reserva de plazas definiendo el acceso del cliente y l
 - Especificar las respuestas y efectos para ausencia de sesión, identidad externa no vinculada, cuenta inactiva, cliente no vinculado e identidad de cliente inactiva.
 - Cubrir con escenarios la autorización por pertenencia, incluida una petición que intenta operar sobre otro cliente y debe recibir un rechazo neutro sin revelar información sobre él.
 - Dejar como requisito pendiente de la propuesta de reservas de la PR #2 la revalidación transaccional de que el cliente autenticado sigue activo justo antes de confirmar cualquier mutación.
-- Mantener pendiente la elección del transporte de la sesión entre cookie gestionada por Auth0 y bearer token; la API no podrá aceptar un `sub` procedente del body, query o headers controlados por el cliente.
+- Fijar el patrón BFF de Next.js: Auth0 autentica al usuario y Next.js emite una cookie de sesión propia `HttpOnly`; Angular llamará a la API con credenciales explícitas y la API validará server-side la sesión antes de extraer el `sub`.
 - Mantener fuera del alcance la implementación de reservas, el backoffice, la gestión de cuentas, los cambios de contraseña y la autenticación de monitores o recepción.
 
 ## Capabilities
@@ -37,4 +37,4 @@ Este cambio desbloquea la reserva de plazas definiendo el acceso del cliente y l
 
 ## Pending Decisions
 
-- **Transporte de sesión:** la documentación fija Auth0 como propietario de la sesión, pero no decide si la API recibirá una cookie de sesión gestionada por Auth0 o un access token bearer. Antes de implementar el adaptador server-side hay que elegir un único mecanismo y documentar su validación de firma, issuer, audience, expiración, proveedor y revocación.
+- **Validación de sesión:** Next.js usará el SDK oficial `@auth0/nextjs-auth0` para validar la cookie BFF firmada/cifrada y obtener la sesión server-side; la configuración deberá fijar secreto, dominio, cliente, callback, issuer, audience, expiración y revocación, sin aceptar bearer tokens como alternativa implícita.

@@ -32,11 +32,11 @@ La alternativa de implementar un formulario propio contra la API se descarta por
 
 ### Resolución server-side de identidad
 
-Las rutas protegidas pasarán por un único resolvedor de contexto autenticado. Auth0 seguirá siendo el propietario de las credenciales y de las sesiones reales, de acuerdo con la documentación vigente. El resolvedor validará server-side la sesión recibida según el transporte que se decida, extraerá el `sub` verificado y nunca lo aceptará desde el body, query ni headers controlados por el cliente. Después buscará la `AuthIdentity` por `(provider, externalSubject)` y seguirá las relaciones hasta `UserAccount` y `Client`.
+Las rutas protegidas pasarán por un único resolvedor de contexto autenticado. Auth0 seguirá siendo el propietario de las credenciales y Next.js, mediante `@auth0/nextjs-auth0`, gestionará el callback y la sesión BFF. En producción, Angular llamará a la API con la cookie de sesión `HttpOnly` emitida por Next.js y una petición credentialed (`withCredentials: true`/`credentials: 'include'`). La API permitirá únicamente los orígenes configurados, responderá con CORS credentialed sin comodines y aplicará protección CSRF a mutaciones. El resolvedor usará `auth0.getSession(request)` server-side, validará la integridad de la cookie y sus claims mediante el secreto/configuración del SDK, comprobará issuer, audience, expiración, proveedor y revocación, y después extraerá el `sub` verificado. Nunca aceptará el `sub` desde el body, query ni headers controlados por el cliente. No se aceptarán bearer tokens como transporte alternativo implícito.
 
 El resultado será un contexto interno con la cuenta y el `clientId` efectivo. La cuenta debe estar activa, tener `role = CLIENT`, y el cliente debe existir, estar vinculado uno a uno y estar activo. La ausencia de cualquier relación, un rol distinto o un estado no operativo produce rechazo antes de llamar al caso de uso de reserva. La consulta no debe convertirse en un mecanismo para probar la existencia de otro cliente.
 
-La documentación vigente fija una sesión de ocho horas de inactividad, varias sesiones simultáneas y la invalidación de todas las sesiones al cambiar o restablecer la contraseña o desactivar la cuenta. El resolvedor debe respetar esos estados sin duplicar contraseñas, tokens o cookies en PostgreSQL. El transporte concreto entre cookie de sesión Auth0 y bearer token queda pendiente porque no está fijado por la documentación.
+La documentación vigente fija una sesión de ocho horas de inactividad, varias sesiones simultáneas y la invalidación de todas las sesiones al cambiar o restablecer la contraseña o desactivar la cuenta. El resolvedor debe respetar esos estados sin duplicar contraseñas, tokens o cookies en PostgreSQL. La cookie debe llevar `Secure`, `HttpOnly`, `Path=/` y una política `SameSite` compatible con el dominio de producción; no se expondrá a JavaScript ni se registrará.
 
 ### Identidad efectiva y parámetros de cliente
 
@@ -67,6 +67,6 @@ Las pruebas ordinarias usarán identidades `MOCK` con subjects estables solo cua
 
 El cambio es aditivo porque actualmente no hay autenticación ni reservas implementadas. Primero se incorporará la configuración del proveedor y el resolvedor de identidad; después se conectarán las rutas de reserva. El rollback consiste en deshabilitar las rutas protegidas y retirar el adaptador de autenticación sin migrar ni borrar datos de negocio. Las identidades `MOCK` no se habilitarán en producción.
 
-## Pending Decision
+## Implementation Constraint
 
-La documentación vigente confirma Auth0 y sus reglas de sesión, pero no determina el transporte de sesión hacia la API. Antes de implementar el resolvedor hay que decidir entre cookie de sesión gestionada por Auth0 y bearer token, y fijar para la opción elegida la validación server-side de firma, issuer, audience, expiración, proveedor y revocación. Se recomienda escoger un único transporte y no aceptar ambos implícitamente.
+La cookie de sesión BFF de Next.js es el único transporte permitido entre Angular y la API en producción. El SDK mantiene `HttpOnly` y la aplicación debe fijar `Secure` en producción, `SameSite` compatible con el dominio, `Path=/`, secreto robusto, duración de inactividad de ocho horas y rutas de callback/logout internas. Esta cookie no se persiste en PostgreSQL ni se expone a Angular.

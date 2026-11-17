@@ -17,6 +17,24 @@ El sistema SHALL permitir que un cliente con una cuenta activa inicie sesión me
 - **WHEN** el cliente presenta credenciales inválidas, una cuenta inexistente, inactiva o temporalmente bloqueada
 - **THEN** no se crea una sesión y se devuelve el mismo rechazo genérico sin revelar la causa
 
+### Requirement: Transporte de sesión
+Auth0 SHALL autenticar al usuario mediante el flujo BFF de Next.js y Next.js SHALL emitir una cookie de sesión propia `HttpOnly` usando `@auth0/nextjs-auth0`. Angular SHALL enviar las peticiones protegidas a la API con credenciales explícitas. La API SHALL aceptar únicamente los orígenes de producción configurados, credenciales CORS sin comodines y protección CSRF para mutaciones. La API MUST NOT aceptar bearer tokens como transporte alternativo implícito.
+
+#### Scenario: Petición credentialed válida
+- **WHEN** Angular envía una petición protegida con `credentials: 'include'` y una cookie BFF válida desde un origen permitido
+- **THEN** la API valida la sesión server-side y continúa con la resolución de identidad sin exponer la cookie a JavaScript
+
+#### Scenario: Petición desde origen no permitido o mutación sin CSRF válido
+- **WHEN** una petición protegida llega desde un origen no permitido o una mutación no presenta la prueba CSRF válida
+- **THEN** la API rechaza la petición antes de cualquier efecto de negocio y no revela información sobre la sesión o los clientes
+
+### Requirement: Validación server-side de sesión
+La API SHALL usar `auth0.getSession(request)` server-side para validar la cookie BFF mediante el secreto y la configuración del SDK, y SHALL comprobar issuer, audience, expiración, proveedor y revocación antes de extraer el `sub` verificado.
+
+#### Scenario: Cookie inválida o revocada
+- **WHEN** una petición incluye una cookie BFF ausente, manipulada, expirada o revocada
+- **THEN** la API responde como no autenticada y no ejecuta efectos de negocio
+
 ### Requirement: Resolución de identidad interna
 La API SHALL resolver server-side una sesión gestionada por Auth0 mediante el `sub` verificado hasta una única `AuthIdentity`, su `UserAccount` con `role = CLIENT` y el `Client` asociado, y SHALL exponer ese cliente como identidad efectiva de la petición. El `sub` MUST NOT proceder del body, query ni headers controlados por el cliente.
 
