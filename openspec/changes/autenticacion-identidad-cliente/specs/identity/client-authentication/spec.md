@@ -18,11 +18,15 @@ El sistema SHALL permitir que un cliente con una cuenta activa inicie sesión me
 - **THEN** no se crea una sesión y se devuelve el mismo rechazo genérico sin revelar la causa
 
 ### Requirement: Resolución de identidad interna
-La API SHALL resolver una sesión autenticada mediante el `sub` del proveedor hasta una única `AuthIdentity`, su `UserAccount` y el `Client` asociado, y SHALL exponer ese cliente como identidad efectiva de la petición.
+La API SHALL resolver server-side una sesión gestionada por Auth0 mediante el `sub` verificado hasta una única `AuthIdentity`, su `UserAccount` con `role = CLIENT` y el `Client` asociado, y SHALL exponer ese cliente como identidad efectiva de la petición. El `sub` MUST NOT proceder del body, query ni headers controlados por el cliente.
 
 #### Scenario: Sesión vinculada a un cliente activo
-- **WHEN** una petición protegida presenta una sesión válida cuyo `sub` está vinculado a una cuenta activa y a un cliente activo
+- **WHEN** una petición protegida presenta una sesión válida cuyo `sub` está vinculado a una cuenta activa con rol `CLIENT` y a un cliente activo
 - **THEN** la API acepta el contexto autenticado y proporciona el `clientId` resuelto para la operación de reserva
+
+#### Scenario: Cuenta con rol operativo rechazada
+- **WHEN** una petición protegida presenta una sesión válida cuyo `sub` está vinculado a una cuenta activa con rol `MONITOR` o `RECEPTION`, aunque exista un `Client` asociado
+- **THEN** la API rechaza la operación como no autorizada y no proporciona contexto de cliente ni consulta o modifica reservas
 
 #### Scenario: Identidad externa no vinculada
 - **WHEN** una petición presenta una sesión válida cuyo `sub` no tiene una `AuthIdentity` local vinculada a una cuenta
@@ -35,8 +39,8 @@ Toda operación de reserva para clientes SHALL exigir una sesión válida y una 
 - **WHEN** una persona solicita una operación de reserva sin cookie, token o sesión autenticada válida
 - **THEN** la API responde como no autenticada y no crea, modifica ni cancela ninguna reserva
 
-#### Scenario: Cliente no vinculado o inactivo
-- **WHEN** una sesión válida pertenece a una cuenta sin `Client` asociado o a un `Client` inactivo
+#### Scenario: Cuenta o cliente no operativo
+- **WHEN** una sesión válida pertenece a una cuenta sin `Client` asociado, a una cuenta con rol distinto de `CLIENT` o a un `Client` inactivo
 - **THEN** la API rechaza la operación como no autorizada y no crea, modifica ni cancela ninguna reserva
 
 ### Requirement: Aislamiento de la identidad del cliente
@@ -44,7 +48,7 @@ Las operaciones de reserva realizadas por un cliente SHALL actuar únicamente so
 
 #### Scenario: Intento de actuar en nombre de otro cliente
 - **WHEN** el cliente A envía una petición autenticada que incluye el identificador del cliente B para crear, consultar, modificar o cancelar una reserva
-- **THEN** la API rechaza la petición como no autorizada o la resuelve exclusivamente para A, no realiza efectos sobre B y no revela si la reserva de B existe
+- **THEN** la API rechaza la petición como no autorizada con la misma respuesta neutra independientemente de que B exista, sin consultar ni realizar efectos sobre B y sin revelar si B o su reserva existen
 
 #### Scenario: Operación para el propio cliente
 - **WHEN** el cliente envía una petición autenticada sin un identificador ajeno o con el identificador que coincide con su identidad resuelta
@@ -56,3 +60,10 @@ El sistema SHALL impedir el acceso a operaciones protegidas cuando la sesión ha
 #### Scenario: Sesión caducada o invalidada
 - **WHEN** una petición protegida usa una sesión caducada, cerrada o invalidada
 - **THEN** la API rechaza la petición sin efectos y el cliente debe iniciar sesión de nuevo antes de repetirla
+
+### Requirement: Revalidación transaccional del cliente activo en reservas
+La futura propuesta OpenSpec de reservas de la PR #2 SHALL exigir que cada mutación vuelva a comprobar, dentro de su frontera transaccional y justo antes de confirmar, que la cuenta y el `Client` del contexto siguen activos y pertenecen al cliente autenticado. Este requisito queda pendiente de esa propuesta porque este cambio no implementa reservas.
+
+#### Scenario: Cliente desactivado entre resolución y confirmación
+- **WHEN** una operación de reserva resuelve un cliente activo pero el cliente se desactiva antes de la confirmación de la mutación
+- **THEN** la transacción de reservas rechaza la operación, no confirma efectos de negocio y deja documentado el rechazo sin revelar datos de otros clientes
